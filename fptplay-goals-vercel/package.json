@@ -1,0 +1,25 @@
+{
+  "name": "fptplay-goals",
+  "version": "1.0.0",
+  "description": "FPT Play Goals – KPI Manager MSC (Vercel + Neon Postgres)",
+  "scripts": {
+    "db:migrate": "node --env-file=.env scripts/migrate.mjs",
+    "import": "node --env-file=.env scripts/import-sheets.mjs",
+    "test": "node scripts/test-e2e.mjs",
+    "dev": "vercel dev",
+    "dev:local": "node scripts/dev-local.mjs"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "nodemailer": "^10.6.0",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}
