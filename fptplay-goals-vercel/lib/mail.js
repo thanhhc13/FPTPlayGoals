@@ -4,8 +4,8 @@ import { mscRankFromScore, GROUPS } from './msc.js';
 // ============================================================ CẤU HÌNH LIÊN HỆ FHR
 // Sửa lời văn / người liên hệ tại đây (giữ đúng như email Apps Script cũ).
 const SENDER_NAME = 'Phòng Nhân sự FPT Play';
-const SUPPORT_PLAN = ['VanPTT9@fpt.com', 'ThanhHC14@fpt.com'];   // email OTP, kế hoạch, BĐH, sửa KH
-const SUPPORT_RESULT = ['VanPTT9@fpt.com', 'BichDT3@fpt.com'];   // email báo cáo kết quả
+const SUPPORT_PLAN = ['ThanhHC14@fpt.com', 'ThanhHC14@fpt.com'];   // email OTP, kế hoạch, BĐH, sửa KH
+const SUPPORT_RESULT = ['ThanhHC14@fpt.com', 'ThanhHC14@fpt.com'];   // email báo cáo kết quả
 
 // ============================================================ gửi mail
 let transporter = null;
@@ -38,6 +38,17 @@ export async function sendMail({ to, cc, subject, text, html, meta }) {
   const from = /</.test(fromAddr) ? fromAddr : `"${SENDER_NAME}" <${fromAddr}>`;
   const msg = { from, to: toList, cc: ccList, subject, text, html };
   if (process.env.MAIL_DRY_RUN === '1') { sentMails.push({ ...msg, meta }); return { messageId: 'dry-run' }; }
+  // Gửi qua webhook n8n (n8n nằm trong mạng FPT, tới được SMTP nội bộ)
+  if (process.env.MAIL_WEBHOOK_URL) {
+    const r = await fetch(process.env.MAIL_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Mail-Secret': process.env.MAIL_WEBHOOK_SECRET || '' },
+      body: JSON.stringify({ to: toList.join(','), cc: ccList.join(','), subject, text, html }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!r.ok) throw new Error(`Mail webhook HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`);
+    return { messageId: 'webhook' };
+  }
   return getTransporter().sendMail(msg);
 }
 
