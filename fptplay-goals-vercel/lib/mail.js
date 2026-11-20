@@ -38,17 +38,7 @@ export async function sendMail({ to, cc, subject, text, html, meta }) {
   const from = /</.test(fromAddr) ? fromAddr : `"${SENDER_NAME}" <${fromAddr}>`;
   const msg = { from, to: toList, cc: ccList, subject, text, html };
   if (process.env.MAIL_DRY_RUN === '1') { sentMails.push({ ...msg, meta }); return { messageId: 'dry-run' }; }
-  // Gửi qua webhook n8n (n8n nằm trong mạng FPT, tới được SMTP nội bộ)
-  if (process.env.MAIL_WEBHOOK_URL) {
-    const r = await fetch(process.env.MAIL_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Mail-Secret': process.env.MAIL_WEBHOOK_SECRET || '' },
-      body: JSON.stringify({ to: toList.join(','), cc: ccList.join(','), subject, text, html }),
-      signal: AbortSignal.timeout(20_000),
-    });
-    if (!r.ok) throw new Error(`Mail webhook HTTP ${r.status}: ${(await r.text()).slice(0, 200)}`);
-    return { messageId: 'webhook' };
-  }
+  
   return getTransporter().sendMail(msg);
 }
 
